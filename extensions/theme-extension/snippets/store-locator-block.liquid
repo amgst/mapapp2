@@ -1,0 +1,277 @@
+{% comment %}
+  Store Locator Block Snippet
+  Renders the store locator functionality
+{% endcomment %}
+
+<div class="store-locator-block" id="store-locator-{{ block.id }}">
+  {% if block.settings.title != blank %}
+    <h3 class="store-locator-title">{{ block.settings.title }}</h3>
+  {% endif %}
+  
+  {% if block.settings.description != blank %}
+    <p class="store-locator-description">{{ block.settings.description }}</p>
+  {% endif %}
+
+  <div class="store-locator-search">
+    <div class="search-input-wrapper">
+      <input 
+        type="text" 
+        id="location-search-{{ block.id }}" 
+        class="location-search-input"
+        placeholder="{{ block.settings.search_placeholder | default: 'Enter your location...' }}"
+      >
+      <button 
+        type="button" 
+        class="search-button" 
+        onclick="searchLocations('{{ block.id }}')"
+      >
+        {{ block.settings.search_button_text | default: 'Search' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="store-locator-content">
+    <div class="stores-list" id="stores-list-{{ block.id }}">
+      <div class="loading-message" style="display: none;">Searching for locations...</div>
+      <div class="no-results" style="display: none;">No locations found nearby.</div>
+    </div>
+    
+    <div class="map-container">
+      <div id="locator-map-{{ block.id }}" class="locator-map" style="height: {{ block.settings.map_height }}px;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.storeLocatorData = window.storeLocatorData || {};
+  window.storeLocatorData['{{ block.id }}'] = {
+    apiKey: '{{ block.settings.google_maps_api_key }}',
+    defaultLat: {{ block.settings.default_latitude | default: 40.7128 }},
+    defaultLng: {{ block.settings.default_longitude | default: -74.0060 }},
+    defaultZoom: {{ block.settings.default_zoom | default: 10 }},
+    searchRadius: {{ block.settings.search_radius | default: 50 }},
+    stores: [
+      {% for i in (1..10) %}
+        {% assign store_name = 'store_' | append: i | append: '_name' %}
+        {% assign store_address = 'store_' | append: i | append: '_address' %}
+        {% assign store_lat = 'store_' | append: i | append: '_latitude' %}
+        {% assign store_lng = 'store_' | append: i | append: '_longitude' %}
+        {% assign store_phone = 'store_' | append: i | append: '_phone' %}
+        {% assign store_hours = 'store_' | append: i | append: '_hours' %}
+        
+        {% if block.settings[store_name] != blank %}
+          {
+            name: '{{ block.settings[store_name] | escape }}',
+            address: '{{ block.settings[store_address] | escape }}',
+            lat: {{ block.settings[store_lat] | default: 0 }},
+            lng: {{ block.settings[store_lng] | default: 0 }},
+            phone: '{{ block.settings[store_phone] | escape }}',
+            hours: '{{ block.settings[store_hours] | escape }}'
+          }{% unless forloop.last %},{% endunless %}
+        {% endif %}
+      {% endfor %}
+    ].filter(store => store.lat !== 0 && store.lng !== 0)
+  };
+
+  function initStoreLocator(blockId) {
+    const data = window.storeLocatorData[blockId];
+    if (!data || !data.apiKey) {
+      document.getElementById(`locator-map-${blockId}`).innerHTML = 
+        '<div class="map-error">Google Maps API key required</div>';
+      return;
+    }
+
+    const map = new google.maps.Map(document.getElementById(`locator-map-${blockId}`), {
+      center: { lat: data.defaultLat, lng: data.defaultLng },
+      zoom: data.defaultZoom
+    });
+
+    const markers = [];
+    const infoWindows = [];
+
+    // Add store markers
+    data.stores.forEach((store, index) => {
+      const marker = new google.maps.Marker({
+        position: { lat: store.lat, lng: store.lng },
+        map: map,
+        title: store.name
+      });
+
+      const infoWindow = new google.maps.InfoWindow({
+        content: `
+          <div class="store-info">
+            <h4>${store.name}</h4>
+            <p>${store.address}</p>
+            ${store.phone ? `<p>Phone: ${store.phone}</p>` : ''}
+            ${store.hours ? `<p>Hours: ${store.hours}</p>` : ''}
+          </div>
+        `
+      });
+
+      marker.addListener('click', () => {
+        infoWindows.forEach(iw => iw.close());
+        infoWindow.open(map, marker);
+      });
+
+      markers.push(marker);
+      infoWindows.push(infoWindow);
+    });
+
+    // Display stores list
+    displayStoresList(blockId, data.stores);
+  }
+
+  function displayStoresList(blockId, stores) {
+    const storesList = document.getElementById(`stores-list-${blockId}`);
+    if (stores.length === 0) {
+      storesList.innerHTML = '<div class="no-results">No stores configured.</div>';
+      return;
+    }
+
+    const storesHTML = stores.map(store => `
+      <div class="store-item">
+        <h4 class="store-name">${store.name}</h4>
+        <p class="store-address">${store.address}</p>
+        ${store.phone ? `<p class="store-phone">📞 ${store.phone}</p>` : ''}
+        ${store.hours ? `<p class="store-hours">🕒 ${store.hours}</p>` : ''}
+      </div>
+    `).join('');
+
+    storesList.innerHTML = storesHTML;
+  }
+
+  function searchLocations(blockId) {
+    const searchInput = document.getElementById(`location-search-${blockId}`);
+    const query = searchInput.value.trim();
+    
+    if (!query) {
+      alert('Please enter a location to search.');
+      return;
+    }
+
+    // This is a simplified search - in a real implementation,
+    // you would use Google Places API or similar service
+    const data = window.storeLocatorData[blockId];
+    displayStoresList(blockId, data.stores);
+  }
+
+  function initializeStoreLocator{{ block.id | replace: '-', '' }}() {
+    initStoreLocator('{{ block.id }}');
+  }
+
+  if (typeof google === 'undefined' && '{{ block.settings.google_maps_api_key }}' !== '') {
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key={{ block.settings.google_maps_api_key }}&libraries=places&callback=initializeStoreLocator{{ block.id | replace: '-', '' }}`;
+    script.async = true;
+    document.head.appendChild(script);
+  } else if (typeof google !== 'undefined') {
+    initStoreLocator('{{ block.id }}');
+  }
+</script>
+
+<style>
+  .store-locator-block {
+    margin: 2rem 0;
+  }
+
+  .store-locator-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: {{ block.settings.title_color | default: '#333' }};
+  }
+
+  .store-locator-description {
+    margin-bottom: 1.5rem;
+    color: {{ block.settings.text_color | default: '#666' }};
+  }
+
+  .store-locator-search {
+    margin-bottom: 2rem;
+  }
+
+  .search-input-wrapper {
+    display: flex;
+    gap: 0.5rem;
+    max-width: 400px;
+  }
+
+  .location-search-input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 2px solid {{ block.settings.input_border_color | default: '#ddd' }};
+    border-radius: 4px;
+    font-size: 1rem;
+  }
+
+  .search-button {
+    padding: 0.75rem 1.5rem;
+    background: {{ block.settings.button_color | default: '#007cba' }};
+    color: {{ block.settings.button_text_color | default: '#fff' }};
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s;
+  }
+
+  .search-button:hover {
+    opacity: 0.9;
+  }
+
+  .store-locator-content {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 2rem;
+  }
+
+  .stores-list {
+    max-height: {{ block.settings.map_height }}px;
+    overflow-y: auto;
+  }
+
+  .store-item {
+    padding: 1rem;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+  }
+
+  .store-name {
+    margin: 0 0 0.5rem 0;
+    color: {{ block.settings.store_name_color | default: '#333' }};
+  }
+
+  .store-address,
+  .store-phone,
+  .store-hours {
+    margin: 0.25rem 0;
+    font-size: 0.9rem;
+    color: {{ block.settings.store_info_color | default: '#666' }};
+  }
+
+  .locator-map {
+    width: 100%;
+    border-radius: 4px;
+  }
+
+  .map-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f8f8;
+    color: #666;
+    font-size: 1rem;
+    height: 100%;
+    min-height: 200px;
+  }
+
+  @media (max-width: 768px) {
+    .store-locator-content {
+      grid-template-columns: 1fr;
+    }
+    
+    .search-input-wrapper {
+      max-width: 100%;
+    }
+  }
+</style>

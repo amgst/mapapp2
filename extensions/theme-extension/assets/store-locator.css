@@ -1,0 +1,186 @@
+/* Store Locator Styles */
+.store-locator {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: var(--font-body-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+}
+
+.store-locator__header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.store-locator__title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: var(--color-foreground, #000);
+}
+
+.store-locator__description {
+  font-size: 1.1rem;
+  color: var(--color-foreground-75, #666);
+  margin-bottom: 20px;
+}
+
+.store-locator__search {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.store-locator__search-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid var(--color-border, #e0e0e0);
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.store-locator__search-input:focus {
+  outline: none;
+  border-color: var(--color-button, #007bff);
+}
+
+.store-locator__search-button {
+  padding: 12px 24px;
+  background-color: var(--color-button, #007bff);
+  color: var(--color-button-text, #fff);
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.store-locator__search-button:hover {
+  background-color: var(--color-button-hover, #0056b3);
+}
+
+.store-locator__content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  align-items: start;
+}
+
+.store-locator__map {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.store-locator__stores {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.store-locator__store {
+  padding: 20px;
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: 8px;
+  margin-bottom: 15px;
+  background-color: var(--color-background, #fff);
+  transition: box-shadow 0.3s ease;
+}
+
+.store-locator__store:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.store-locator__store-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: var(--color-foreground, #000);
+}
+
+.store-locator__store-address {
+  color: var(--color-foreground-75, #666);
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.store-locator__store-phone {
+  color: var(--color-foreground-75, #666);
+  margin-bottom: 10px;
+}
+
+.store-locator__store-hours {
+  color: var(--color-foreground-75, #666);
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+}
+
+.store-locator__directions {
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: var(--color-button-secondary, #f8f9fa);
+  color: var(--color-button-secondary-text, #007bff);
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: background-color 0.3s ease;
+}
+
+.store-locator__directions:hover {
+  background-color: var(--color-button-secondary-hover, #e9ecef);
+  text-decoration: none;
+}
+
+.store-locator__no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--color-foreground-75, #666);
+  font-size: 1.1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .store-locator {
+    padding: 15px;
+  }
+  
+  .store-locator__content {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .store-locator__search {
+    flex-direction: column;
+  }
+  
+  .store-locator__search-input,
+  .store-locator__search-button {
+    width: 100%;
+  }
+  
+  .store-locator__title {
+    font-size: 1.5rem;
+  }
+  
+  .store-locator__stores {
+    max-height: 400px;
+  }
+}
+
+@media (max-width: 480px) {
+  .store-locator {
+    padding: 10px;
+  }
+  
+  .store-locator__store {
+    padding: 15px;
+  }
+  
+  .store-locator__title {
+    font-size: 1.3rem;
+  }
+}

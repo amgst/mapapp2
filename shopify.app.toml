@@ -1,0 +1,28 @@
+# Shopify App Configuration
+name = "MapApp Store Locator"
+handle = "mapapp-store-locator"
+client_id = "b77925eb16375dd3ba95c4b1e1d14456"
+application_url = "https://traemapapp2r49c-amgst-amgsts-projects.vercel.app"
+embedded = true
+
+[access_scopes]
+scopes = "read_products,read_locations,read_content"
+
+[auth]
+redirect_urls = [
+  "https://traemapapp2r49c-amgst-amgsts-projects.vercel.app/auth/callback",
+  "https://localhost:3000/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-01"
+
+[build]
+include_config_on_deploy = true
+automatically_update_urls_on_dev = true
+dev_store_url = "https://vgpcreatives.myshopify.com"
+
+[app_proxy]
+url = "https://traemapapp2r49c-amgst-amgsts-projects.vercel.app"
+subpath = "apps"
+prefix = "apps"

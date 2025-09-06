@@ -8,7 +8,14 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "check": "tsc -b --noEmit"
+    "check": "tsc -b --noEmit",
+    "shopify:dev": "shopify app dev",
+    "shopify:build": "shopify app build",
+    "shopify:deploy": "shopify app deploy",
+    "shopify:generate": "shopify app generate",
+    "shopify:info": "shopify app info",
+    "extension:build": "shopify app build --skip-dependencies-installation",
+    "extension:deploy": "shopify app deploy --force"
   },
   "dependencies": {
     "@shopify/storefront-api-client": "^1.0.9",
@@ -23,6 +30,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
+    "@shopify/cli": "^3.84.1",
     "@types/node": "^22.18.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

@@ -1,0 +1,127 @@
+{% comment %}
+  Map Display Block Snippet
+  Renders a simple map display
+{% endcomment %}
+
+<div class="map-display-block" id="map-display-{{ block.id }}">
+  {% if block.settings.title != blank %}
+    <h3 class="map-title">{{ block.settings.title }}</h3>
+  {% endif %}
+  
+  {% if block.settings.description != blank %}
+    <p class="map-description">{{ block.settings.description }}</p>
+  {% endif %}
+
+  <div class="map-wrapper">
+    <div id="simple-map-{{ block.id }}" class="simple-map" style="height: {{ block.settings.height }}px;"></div>
+  </div>
+</div>
+
+<script>
+  window.mapDisplayData = window.mapDisplayData || {};
+  window.mapDisplayData['{{ block.id }}'] = {
+    lat: {{ block.settings.latitude | default: 40.7128 }},
+    lng: {{ block.settings.longitude | default: -74.0060 }},
+    zoom: {{ block.settings.zoom | default: 12 }},
+    apiKey: '{{ block.settings.google_maps_api_key }}',
+    markerTitle: '{{ block.settings.marker_title | escape }}'
+  };
+
+  function initSimpleMap(blockId) {
+    const data = window.mapDisplayData[blockId];
+    if (!data || !data.apiKey) {
+      document.getElementById(`simple-map-${blockId}`).innerHTML = 
+        '<div class="map-error">Google Maps API key required</div>';
+      return;
+    }
+
+    const map = new google.maps.Map(document.getElementById(`simple-map-${blockId}`), {
+      center: { lat: data.lat, lng: data.lng },
+      zoom: data.zoom,
+      mapTypeControl: {{ block.settings.show_map_type_control }},
+      streetViewControl: {{ block.settings.show_street_view_control }},
+      fullscreenControl: {{ block.settings.show_fullscreen_control }}
+    });
+
+    {% if block.settings.show_marker %}
+    const marker = new google.maps.Marker({
+      position: { lat: data.lat, lng: data.lng },
+      map: map,
+      title: data.markerTitle
+    });
+
+    {% if block.settings.marker_info != blank %}
+    const infoWindow = new google.maps.InfoWindow({
+      content: '<div class="marker-info">{{ block.settings.marker_info | escape }}</div>'
+    });
+
+    marker.addListener('click', () => {
+      infoWindow.open(map, marker);
+    });
+    {% endif %}
+    {% endif %}
+  }
+
+  function initializeSimpleMap{{ block.id | replace: '-', '' }}() {
+    initSimpleMap('{{ block.id }}');
+  }
+
+  if (typeof google === 'undefined' && '{{ block.settings.google_maps_api_key }}' !== '') {
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key={{ block.settings.google_maps_api_key }}&callback=initializeSimpleMap{{ block.id | replace: '-', '' }}`;
+    script.async = true;
+    document.head.appendChild(script);
+  } else if (typeof google !== 'undefined') {
+    initSimpleMap('{{ block.id }}');
+  }
+</script>
+
+<style>
+  .map-display-block {
+    margin: 1rem 0;
+  }
+
+  .map-title {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    color: {{ block.settings.title_color | default: '#333' }};
+    text-align: {{ block.settings.title_alignment | default: 'left' }};
+  }
+
+  .map-description {
+    margin-bottom: 1rem;
+    color: {{ block.settings.text_color | default: '#666' }};
+    text-align: {{ block.settings.text_alignment | default: 'left' }};
+  }
+
+  .map-wrapper {
+    border-radius: {{ block.settings.border_radius }}px;
+    overflow: hidden;
+    {% if block.settings.show_shadow %}
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    {% endif %}
+    {% if block.settings.border_width > 0 %}
+    border: {{ block.settings.border_width }}px solid {{ block.settings.border_color | default: '#ddd' }};
+    {% endif %}
+  }
+
+  .simple-map {
+    width: 100%;
+  }
+
+  .map-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f8f8;
+    color: #666;
+    font-size: 1rem;
+    height: 100%;
+    min-height: 200px;
+  }
+
+  .marker-info {
+    max-width: 200px;
+    padding: 0.5rem;
+  }
+</style>

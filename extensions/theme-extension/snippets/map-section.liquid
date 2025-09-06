@@ -1,0 +1,67 @@
+{% comment %}
+  Map Section Snippet
+  This snippet provides a complete map section layout that can be used in blocks
+{% endcomment %}
+
+<div class="map-section" id="map-section-{{ section.id | default: 'default' }}">
+  <div class="container">
+    {% if heading != blank %}
+      <h2 class="section-heading">{{ heading }}</h2>
+    {% endif %}
+    
+    {% if subheading != blank %}
+      <p class="section-subheading">{{ subheading }}</p>
+    {% endif %}
+
+    <div class="map-container">
+      {{ content }}
+    </div>
+  </div>
+</div>
+
+<style>
+  .map-section {
+    padding: {{ padding_top | default: 50 }}px 0 {{ padding_bottom | default: 50 }}px;
+    background-color: {{ background_color | default: '#ffffff' }};
+  }
+
+  .container {
+    max-width: {{ container_width | default: 1200 }}px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  .section-heading {
+    font-size: {{ heading_size | default: 36 }}px;
+    color: {{ heading_color | default: '#333333' }};
+    text-align: {{ text_alignment | default: 'center' }};
+    margin-bottom: 1rem;
+    font-weight: {{ heading_weight | default: 600 }};
+  }
+
+  .section-subheading {
+    font-size: {{ subheading_size | default: 18 }}px;
+    color: {{ subheading_color | default: '#666666' }};
+    text-align: {{ text_alignment | default: 'center' }};
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+
+  .map-container {
+    width: 100%;
+  }
+
+  @media (max-width: 768px) {
+    .container {
+      padding: 0 15px;
+    }
+    
+    .section-heading {
+      font-size: calc({{ heading_size | default: 36 }}px * 0.8);
+    }
+    
+    .section-subheading {
+      font-size: calc({{ subheading_size | default: 18 }}px * 0.9);
+    }
+  }
+</style>

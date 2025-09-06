@@ -1,0 +1,23 @@
+{
+  "store_locator": {
+    "title": "Store Locator",
+    "description": "Find our store locations near you",
+    "search_placeholder": "Enter your location",
+    "search_button": "Search",
+    "no_results": "No stores found in your area",
+    "directions": "Get Directions",
+    "phone": "Phone",
+    "hours": "Hours",
+    "address": "Address"
+  },
+  "map_display": {
+    "title": "Our Location",
+    "description": "Visit us at our store location",
+    "view_larger_map": "View Larger Map",
+    "get_directions": "Get Directions"
+  },
+  "map_section": {
+    "heading": "Find Us",
+    "subheading": "Locate our stores and get directions"
+  }
+}
