@@ -11,4 +11,80 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Shopify theme variables */
+  --shopify-primary: #000000;
+  --shopify-secondary: #666666;
+}
+
+/* Dark theme support */
+body.dark {
+  background-color: #1a1a1a;
+  color: #ffffff;
+}
+
+body.dark .bg-white {
+  background-color: #2d2d2d !important;
+}
+
+body.dark .bg-gray-50 {
+  background-color: #1a1a1a !important;
+}
+
+body.dark .text-black {
+  color: #ffffff !important;
+}
+
+body.dark .text-gray-600 {
+  color: #a0a0a0 !important;
+}
+
+body.dark .text-gray-500 {
+  color: #888888 !important;
+}
+
+body.dark .border-gray-200 {
+  border-color: #404040 !important;
+}
+
+body.dark .border-gray-300 {
+  border-color: #505050 !important;
+}
+
+body.dark .hover\:bg-gray-50:hover {
+  background-color: #404040 !important;
+}
+
+/* Shopify integration styles */
+.shopify-embedded {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.shopify-embedded body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Loading spinner for Shopify */
+.shopify-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.shopify-loading .spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid var(--shopify-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

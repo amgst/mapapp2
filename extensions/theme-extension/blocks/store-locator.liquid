@@ -1,345 +1,316 @@
 {% comment %}
-  Store Locator App Block
-  This block displays an interactive map with store locations
+  Custom Map Builder App Block
+  This block displays the React-based custom map builder for personalized products
 {% endcomment %}
 
-<div class="store-locator-block" id="store-locator-{{ block.id }}">
-  <div class="store-locator-header">
+<div class="map-builder-block" id="map-builder-{{ block.id }}">
+  <div class="map-builder-header">
     {% if block.settings.title != blank %}
-      <h2 class="store-locator-title">{{ block.settings.title }}</h2>
+      <h2 class="map-builder-title">{{ block.settings.title }}</h2>
     {% endif %}
     {% if block.settings.description != blank %}
-      <p class="store-locator-description">{{ block.settings.description }}</p>
+      <p class="map-builder-description">{{ block.settings.description }}</p>
     {% endif %}
   </div>
 
-  <div class="store-locator-content">
-    {% if block.settings.show_search %}
-      <div class="store-search">
-        <input type="text" id="store-search-{{ block.id }}" placeholder="{{ block.settings.search_placeholder | default: 'Enter your location...' }}" class="store-search-input">
-        <button type="button" class="store-search-btn" onclick="searchStores('{{ block.id }}')">{{ block.settings.search_button_text | default: 'Find Stores' }}</button>
+  <div class="map-builder-content">
+    <!-- React App Container -->
+    <div id="map-builder-root-{{ block.id }}" class="map-builder-app" style="min-height: {{ block.settings.app_height }}px;">
+      <div class="loading-placeholder">
+        <div class="loading-spinner"></div>
+        <p>Loading Custom Map Builder...</p>
       </div>
-    {% endif %}
-
-    <div class="map-container" id="map-container-{{ block.id }}">
-      <div id="map-{{ block.id }}" class="interactive-map" style="height: {{ block.settings.map_height }}px;"></div>
     </div>
-
-    {% if block.settings.show_store_list %}
-      <div class="store-list" id="store-list-{{ block.id }}">
-        <h3>{{ block.settings.store_list_title | default: 'Store Locations' }}</h3>
-        <div class="store-items" id="store-items-{{ block.id }}"></div>
-      </div>
-    {% endif %}
   </div>
 </div>
 
 <script>
-  // Store locator functionality
-  window.storeLocatorData = window.storeLocatorData || {};
-  window.storeLocatorData['{{ block.id }}'] = {
-    apiKey: '{{ block.settings.google_maps_api_key }}',
-    defaultLat: {{ block.settings.default_latitude | default: 40.7128 }},
-    defaultLng: {{ block.settings.default_longitude | default: -74.0060 }},
-    zoom: {{ block.settings.default_zoom | default: 10 }},
-    stores: [
-      {% for store in block.settings.store_locations %}
-        {
-          name: '{{ store.name | escape }}',
-          address: '{{ store.address | escape }}',
-          lat: {{ store.latitude }},
-          lng: {{ store.longitude }},
-          phone: '{{ store.phone | escape }}',
-          hours: '{{ store.hours | escape }}'
-        }{% unless forloop.last %},{% endunless %}
-      {% endfor %}
-    ]
-  };
-
-  function initStoreLocator(blockId) {
-    const data = window.storeLocatorData[blockId];
-    if (!data || !data.apiKey) return;
-
-    // Initialize Google Maps
-    const map = new google.maps.Map(document.getElementById(`map-${blockId}`), {
-      center: { lat: data.defaultLat, lng: data.defaultLng },
-      zoom: data.zoom
-    });
-
-    // Add store markers
-    data.stores.forEach(store => {
-      const marker = new google.maps.Marker({
-        position: { lat: store.lat, lng: store.lng },
-        map: map,
-        title: store.name
-      });
-
-      const infoWindow = new google.maps.InfoWindow({
-        content: `
-          <div class="store-info">
-            <h4>${store.name}</h4>
-            <p>${store.address}</p>
-            ${store.phone ? `<p>Phone: ${store.phone}</p>` : ''}
-            ${store.hours ? `<p>Hours: ${store.hours}</p>` : ''}
-          </div>
-        `
-      });
-
-      marker.addListener('click', () => {
-        infoWindow.open(map, marker);
-      });
-    });
-
-    // Update store list
-    updateStoreList(blockId, data.stores);
-  }
-
-  function updateStoreList(blockId, stores) {
-    const storeList = document.getElementById(`store-items-${blockId}`);
-    if (!storeList) return;
-
-    storeList.innerHTML = stores.map(store => `
-      <div class="store-item">
-        <h4>${store.name}</h4>
-        <p>${store.address}</p>
-        ${store.phone ? `<p>Phone: ${store.phone}</p>` : ''}
-        ${store.hours ? `<p>Hours: ${store.hours}</p>` : ''}
-      </div>
-    `).join('');
-  }
-
-  function searchStores(blockId) {
-    const searchInput = document.getElementById(`store-search-${blockId}`);
-    const query = searchInput.value.toLowerCase();
-    const data = window.storeLocatorData[blockId];
+  // React Map Builder Integration - Isolated Scope
+  (function(window, document, undefined) {
+    'use strict';
     
-    if (!query) {
-      updateStoreList(blockId, data.stores);
-      return;
+    // Prevent conflicts with existing Shopify theme scripts
+    const originalDetailsDisclosure = window.DetailsDisclosure;
+    const originalDetailsModal = window.DetailsModal;
+    const originalSearchForm = window.SearchForm;
+    
+    // Create isolated scope for our app
+    const config = {
+       theme: '{{ block.settings.theme }}',
+       defaultProduct: '{{ block.settings.default_product }}',
+       checkoutEnabled: {{ block.settings.checkout_enabled }},
+       primaryColor: '{{ block.settings.primary_color }}',
+       secondaryColor: '{{ block.settings.secondary_color }}'
+     };
+
+    // Set global configuration for React app
+    window.SHOPIFY_MAP_CONFIG = config;
+    
+    // Apply theme configuration
+    document.documentElement.style.setProperty('--shopify-primary', config.primaryColor);
+    document.documentElement.style.setProperty('--shopify-secondary', config.secondaryColor);
+    
+    if (config.theme === 'dark') {
+      document.body.classList.add('dark');
     }
 
-    const filteredStores = data.stores.filter(store => 
-      store.name.toLowerCase().includes(query) || 
-      store.address.toLowerCase().includes(query)
-    );
+    // Dispatch custom event when map builder is ready
+    window.dispatchEvent(new CustomEvent('shopify-map-ready'));
     
-    updateStoreList(blockId, filteredStores);
-  }
+    // Initialize React app container
+    const container = document.getElementById('map-builder-root-{{ block.id }}');
+    if (container) {
+      // Create iframe to load React app
+      const iframe = document.createElement('iframe');
+      iframe.src = '{{ block.settings.app_url | default: "http://localhost:5173" }}/builder?shopDomain={{ shop.permanent_domain }}&blockId={{ block.id }}';
+      iframe.style.width = '100%';
+      iframe.style.height = '{{ block.settings.app_height | default: 800 }}px';
+      iframe.style.border = 'none';
+      iframe.style.borderRadius = '8px';
+      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
+      iframe.setAttribute('loading', 'lazy');
+      iframe.onload = function() {
+        // Hide loading placeholder
+        const placeholder = container.querySelector('.loading-placeholder');
+        if (placeholder) placeholder.style.display = 'none';
+      };
 
-  // Initialize when Google Maps API is loaded
-  function initializeStoreLocator{{ block.id | replace: '-', '' }}() {
-    initStoreLocator('{{ block.id }}');
-  }
+      // Replace loading placeholder with iframe
+      container.appendChild(iframe);
+    }
 
-  // Load Google Maps API if not already loaded
-  if (typeof google === 'undefined' && '{{ block.settings.google_maps_api_key }}' !== '') {
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key={{ block.settings.google_maps_api_key }}&callback=initializeStoreLocator{{ block.id | replace: '-', '' }}`;
-    script.async = true;
-    document.head.appendChild(script);
-  } else if (typeof google !== 'undefined') {
-    initStoreLocator('{{ block.id }}');
-  }
+    // Handle cart integration
+    window.addToShopifyCart = function(product) {
+      console.log('Adding to cart:', product);
+      
+      // Integrate with Shopify's cart API
+      const formData = new FormData();
+      formData.append('id', product.id);
+      formData.append('quantity', 1);
+      
+      if (product.customization) {
+        formData.append('properties[Map Customization]', JSON.stringify(product.customization));
+      }
+      
+      fetch('/cart/add.js', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Added to cart:', data);
+        // Trigger cart drawer or redirect
+        if (window.theme && window.theme.cartDrawer) {
+          window.theme.cartDrawer.open();
+        } else {
+          window.location.href = '/cart';
+        }
+      })
+      .catch(error => {
+        console.error('Error adding to cart:', error);
+      });
+    };
+
+    // Handle messages from React app
+    window.addEventListener('message', function(event) {
+      const allowedOrigins = ['{{ block.settings.app_url | default: "http://localhost:5173" }}', 'http://localhost:5173', 'https://localhost:5173'];
+      if (!allowedOrigins.includes(event.origin)) return;
+      
+      const { type, data } = event.data;
+      
+      switch (type) {
+        case 'ADD_TO_CART':
+          window.addToShopifyCart(data);
+          break;
+        case 'RESIZE_APP':
+          // Handle app resize requests
+          const iframe = document.querySelector(`#map-builder-root-{{ block.id }} iframe`);
+          if (iframe && data.height) {
+            iframe.style.height = data.height + 'px';
+          }
+          break;
+      }
+    });
+
+    // Initialize map builder when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() {
+        // App initialization is handled above
+      });
+    }
+    
+    // Restore original classes if they existed to prevent conflicts
+    if (originalDetailsDisclosure && !window.DetailsDisclosure) {
+      window.DetailsDisclosure = originalDetailsDisclosure;
+    }
+    if (originalDetailsModal && !window.DetailsModal) {
+      window.DetailsModal = originalDetailsModal;
+    }
+    if (originalSearchForm && !window.SearchForm) {
+      window.SearchForm = originalSearchForm;
+    }
+    
+  })(window, document);
 </script>
 
 <style>
-  .store-locator-block {
+  .map-builder-block {
     margin: 2rem 0;
     padding: 1rem;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
   }
 
-  .store-locator-title {
+  .map-builder-title {
     font-size: 2rem;
     margin-bottom: 1rem;
     color: {{ block.settings.title_color | default: '#333' }};
+    text-align: center;
   }
 
-  .store-locator-description {
+  .map-builder-description {
     margin-bottom: 1.5rem;
     color: {{ block.settings.text_color | default: '#666' }};
+    text-align: center;
+    font-size: 1.1rem;
   }
 
-  .store-search {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
+  .map-builder-content {
+    position: relative;
   }
 
-  .store-search-input {
-    flex: 1;
-    min-width: 200px;
-    padding: 0.75rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 1rem;
-  }
-
-  .store-search-btn {
-    padding: 0.75rem 1.5rem;
-    background-color: {{ block.settings.button_color | default: '#007cba' }};
-    color: {{ block.settings.button_text_color | default: '#fff' }};
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1rem;
-  }
-
-  .store-search-btn:hover {
-    opacity: 0.9;
-  }
-
-  .map-container {
-    margin-bottom: 2rem;
+  .map-builder-app {
+    width: 100%;
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    background: #f8f9fa;
+    position: relative;
   }
 
-  .interactive-map {
-    width: 100%;
+  .loading-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-align: center;
   }
 
-  .store-list {
-    background: #f9f9f9;
-    padding: 1.5rem;
-    border-radius: 8px;
-  }
-
-  .store-list h3 {
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255,255,255,0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
     margin-bottom: 1rem;
-    color: {{ block.settings.title_color | default: '#333' }};
   }
 
-  .store-item {
-    background: white;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 
-  .store-item:last-child {
-    margin-bottom: 0;
+  .loading-placeholder p {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 500;
   }
 
-  .store-item h4 {
-    margin-bottom: 0.5rem;
-    color: {{ block.settings.title_color | default: '#333' }};
-  }
-
-  .store-item p {
-    margin-bottom: 0.25rem;
-    color: {{ block.settings.text_color | default: '#666' }};
-  }
-
-  .store-info {
-    max-width: 250px;
-  }
-
-  .store-info h4 {
-    margin-bottom: 0.5rem;
-  }
-
-  .store-info p {
-    margin-bottom: 0.25rem;
-  }
-
+  /* Responsive design */
   @media (max-width: 768px) {
-    .store-search {
-      flex-direction: column;
+    .map-builder-block {
+      margin: 1rem 0;
+      padding: 0.5rem;
     }
     
-    .store-search-input {
-      min-width: 100%;
+    .map-builder-title {
+      font-size: 1.5rem;
+    }
+    
+    .loading-placeholder {
+      padding: 2rem 1rem;
+    }
+  }
+
+  /* Dark theme support */
+  @media (prefers-color-scheme: dark) {
+    .map-builder-block {
+      background: #1a1a1a;
+      color: #fff;
+    }
+    
+    .map-builder-app {
+      background: #2a2a2a;
     }
   }
 </style>
 
 {% schema %}
 {
-  "name": "Store Locator",
+  "name": "Custom Map Builder",
   "target": "section",
-  "stylesheet": "store-locator.css",
-  "javascript": "store-locator.js",
+  "javascript": "map-builder-loader.js",
   "settings": [
     {
       "type": "text",
       "id": "title",
       "label": "Title",
-      "default": "Find Our Stores"
+      "default": "Create Your Custom Map"
     },
     {
       "type": "textarea",
       "id": "description",
       "label": "Description",
-      "default": "Locate our stores near you"
+      "default": "Design personalized maps for cutting boards, ornaments, and candles"
     },
     {
       "type": "text",
-      "id": "google_maps_api_key",
-      "label": "Google Maps API Key",
-      "info": "Required for map functionality"
+      "id": "app_url",
+      "label": "Map Builder App URL",
+      "default": "https://your-domain.com",
+      "info": "URL where the React map builder app is hosted"
     },
     {
       "type": "range",
-      "id": "map_height",
-      "label": "Map Height (px)",
-      "min": 200,
-      "max": 800,
+      "id": "app_height",
+      "label": "App Height (px)",
+      "min": 400,
+      "max": 1200,
       "step": 50,
-      "default": 400
+      "default": 800
     },
     {
-      "type": "text",
-      "id": "default_latitude",
-      "label": "Default Latitude",
-      "default": "40.7128"
+      "type": "select",
+      "id": "theme",
+      "label": "Theme",
+      "options": [
+        {
+          "value": "light",
+          "label": "Light"
+        },
+        {
+          "value": "dark",
+          "label": "Dark"
+        }
+      ],
+      "default": "light"
     },
     {
-      "type": "text",
-      "id": "default_longitude",
-      "label": "Default Longitude",
-      "default": "-74.0060"
-    },
-    {
-      "type": "range",
-      "id": "default_zoom",
-      "label": "Default Zoom Level",
-      "min": 1,
-      "max": 20,
-      "step": 1,
-      "default": 10
-    },
-    {
-      "type": "checkbox",
-      "id": "show_search",
-      "label": "Show Search Bar",
-      "default": true
-    },
-    {
-      "type": "text",
-      "id": "search_placeholder",
-      "label": "Search Placeholder Text",
-      "default": "Enter your location..."
-    },
-    {
-      "type": "text",
-      "id": "search_button_text",
-      "label": "Search Button Text",
-      "default": "Find Stores"
+      "type": "product",
+      "id": "default_product",
+      "label": "Default Product",
+      "info": "Select the default product to show in the map builder"
     },
     {
       "type": "checkbox",
-      "id": "show_store_list",
-      "label": "Show Store List",
-      "default": true
-    },
-    {
-      "type": "text",
-      "id": "store_list_title",
-      "label": "Store List Title",
-      "default": "Store Locations"
+      "id": "enable_checkout",
+      "label": "Enable Direct Checkout",
+      "default": true,
+      "info": "Allow customers to add customized products directly to cart"
     },
     {
       "type": "color",
@@ -352,18 +323,6 @@
       "id": "text_color",
       "label": "Text Color",
       "default": "#666666"
-    },
-    {
-      "type": "color",
-      "id": "button_color",
-      "label": "Button Background Color",
-      "default": "#007cba"
-    },
-    {
-      "type": "color",
-      "id": "button_text_color",
-      "label": "Button Text Color",
-      "default": "#ffffff"
     }
   ]
 }

@@ -5,8 +5,27 @@ import { traeBadgePlugin } from 'vite-plugin-trae-solo-badge';
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    cors: {
+      origin: '*',
+      credentials: true
+    },
+    headers: {
+      'X-Frame-Options': 'ALLOWALL',
+      'Content-Security-Policy': 'frame-ancestors *;'
+    }
+  },
   build: {
-    sourcemap: 'hidden',
+    sourcemap: false,
+    rollupOptions: {
+      external: ['react', 'react-dom'],
+      output: {
+        globals: {
+          react: 'React',
+          'react-dom': 'ReactDOM'
+        }
+      }
+    }
   },
   plugins: [
     react({
